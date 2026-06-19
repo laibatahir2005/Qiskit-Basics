@@ -1,0 +1,496 @@
+from IPython.display import display
+import numpy as np
+import sympy as sp
+
+from qiskit.quantum_info import Statevector,Operator
+from qiskit import QuantumCircuit
+from qiskit_ibm_runtime import SamplerV2  
+from qiskit_aer import AerSimulator
+
+ 
+# binary in python
+
+x= 0b101  # 0b is syntax for binaries
+print(x)
+print(type(x))
+
+print(0b1 + 0b1010) #adding binaries
+
+b = bin(13) #converting decimal to binary
+print(b)
+print(type(b)) #str, binaries cannot be added as by 'line 10' usage.
+
+#another way of writing binary and geetting decimal
+a = '1101' #string
+print(int(a,2)) #given base 2
+
+# As,
+print('abc' + 'efg')
+# hence
+d1 = bin(5)
+d2= bin(2)
+print(d1+d2) #two strings will be combined only, no addition
+
+# So, we use type-conversion
+
+#type-conversion
+
+x= int(d1,2)
+y= int(d2,2)
+print(x+y)
+
+print()
+# padding binary numbers
+
+for i in range(8):
+    b= bin(i)
+    print(b)
+
+print()
+
+for i in range(8):
+    b= bin(i)[2:] #skipping first two indexes, 0b
+    print(b) 
+
+print()
+
+for i in range(8):
+    b= bin(i)[2:].zfill(3) # 3 bits padding
+    print(b)
+
+print()
+
+
+#now doing all this using library numpy
+
+print(np.binary_repr(13,4)) #(nummwidth)
+
+
+# Boolean Logic
+
+#AND  
+
+print(1010 & 1111) #not binary numbers
+
+print(0b1010 & 0b1111) #binary numbers
+    
+print(bin(0b1010 & 0b1111)) #getting a binary answer as str
+
+print()
+
+# OR
+print(1010 | 1111) 
+
+print(0b1010 | 0b1111) 
+    
+print(bin(0b1010 | 0b1111))
+
+print()
+
+# XOR
+print(1010 ^ 1111) 
+
+print(0b1010 ^ 0b1111) 
+    
+print(bin(0b1010 ^ 0b1111))
+
+print()
+
+# NOT
+# no direct operation
+# cheat code: applying XOR with strings of 1 with respective binary
+
+print(bin(0b0 ^ 0b1))
+print(bin(0b01 ^ 0b11))
+print(bin(0b101 ^ 0b111))
+print(bin(0b1010 ^ 0b1111))
+
+# leading zeroes get ignored, so solving the issue
+
+print(format(0b0 ^ 0b1,'01b'))
+print(format(0b01 ^ 0b11,'02b'))
+print(format(0b101 ^ 0b111,'03b'))
+print(format(0b1010 ^ 0b1111,'04b'))
+
+#vectors in python
+
+
+
+ket_0 = np.array([[1],
+                  [0]])
+print(ket_0)
+#turn it into matrix
+print(sp.Matrix(ket_0))
+
+
+ket_1 = np.array([[0],
+                  [1]])
+print(ket_1)
+print(sp.Matrix(ket_1))
+
+
+print(np.sum(ket_0))
+print(np.sum(ket_0**2))
+print(np.sqrt(np.sum(ket_0))) #length of vector
+
+print(np.vdot(ket_0,ket_1))
+print(np.sqrt(np.vdot(ket_0,ket_1))) #length of vector
+
+# Kroneckers Product
+
+v= np.kron(ket_0,ket_1)
+print(v)
+print(sp.Matrix(v))
+
+
+# Qubits
+
+ket_0 = Statevector([1,0])
+print(ket_0)
+
+
+p0 = ket_0.probabilities()
+print(p0)
+
+ket_1 = Statevector([0,1])
+print(ket_1)
+
+p1 = ket_1.probabilities()
+print(p1)
+
+
+ket_p = Statevector([np.sqrt(1/2),np.sqrt(1/2)])
+print(ket_p)
+
+pp = ket_p.probabilities()
+print(pp)
+
+display(ket_p.draw('latex'))
+
+ket_m = Statevector.from_label('-')
+print(ket_m)
+
+print(ket_m.sample_counts(50))
+
+
+
+# Qauntum Circuits
+
+qc = QuantumCircuit(1,1) # 1qubit, 1classicalbit
+qc.reset(0) #sets the qubit at incex 0 in initial sate 0
+qc.x(0) #applying xgate to 0 indexed qubit
+qc.measure(0,0) #measuring qubit and storing it's value to classical bit
+display(qc.draw('mpl'))
+
+
+
+qc_x = QuantumCircuit(1)
+qc_x.x(0)
+display(qc_x.draw('mpl'))
+
+
+x = Operator(qc_x) #knowing the operator applied
+print(x)
+
+
+ket_1 = Statevector.from_label('1')
+print("|1>:", ket_1)
+print("|0>:",ket_1.evolve(x))
+
+# hadamard gate
+
+qc_h = QuantumCircuit(1)
+qc_h.h(0)
+display(qc_h.draw('mpl'))
+
+H = Operator(qc_h)
+print(H)   #H.draw('latex')
+
+
+
+
+ket_0 = Statevector.from_label('0')
+print('|0>:',ket_0)
+print('|+>:',ket_0.evolve(H))
+
+
+
+ket_1= Statevector.from_label('1')
+print('|1>:',ket_1)
+print('|->:',ket_1.evolve(H))
+
+
+
+qc= QuantumCircuit(1,1)  
+qc.h(0) 
+qc.measure(0,0) 
+display(qc.draw('mpl'))
+
+
+
+# Quantum Circuits Simulations
+
+from qiskit.providers.basic_provider import BasicSimulator
+
+simulator = BasicSimulator()
+job = simulator.run(qc, shots=100)
+result = job.result()
+counts = result.get_counts()
+print(counts)
+
+print(BasicSimulator().run(qc, shots=100).result().get_counts())
+
+# inintial states , operations/gates , mearurements
+
+# two types of operations: unitary(reverible) ; measurements(irreversible)
+
+# deriving information from quantum circuit through statevector and operator classes
+
+qc = QuantumCircuit(1)
+
+qc.x(0)
+
+q= Statevector(qc)
+print(q)
+
+
+qp = q.probabilities()
+print(qp)
+
+
+print(q.sample_counts(100))
+
+
+qc.h(0)
+
+q = Statevector(qc)
+print(q)
+
+
+qp = q.probabilities()
+print(qp)
+
+
+print(q.sample_counts(100))
+
+display(qc.draw('mpl'))
+
+M = Operator(qc) #combined x and h effect, 2*2 unitary operator, applied on qubit
+
+X = Operator.from_label('X')
+H = Operator.from_label('H')
+
+U = H @ X # multiplcation done from right to left in matrices
+print(U)  #same as M
+
+if(M==U):
+    print('True')
+
+
+#Simulations
+#executing quantum circuits really as on hardwares via using simulators    
+    
+#the basic simualator
+from qiskit.providers.basic_provider import BasicSimulator
+
+# Aer simulator(the advanced one)
+
+                            #using both to see similarties
+
+qc= QuantumCircuit(1,1)  
+qc.h(0) 
+qc.measure(0,0) 
+display(qc.draw('mpl'))
+
+
+
+sim_basic = BasicSimulator()   #making simulating objects
+counts_basic = sim_basic.run(qc, shots=100).result().get_counts()
+
+print(counts_basic)
+
+
+# Aer Simulator
+
+sim_aer = AerSimulator()
+counts_aer = sim_aer.run(qc, shots=100).result().get_counts()
+
+print(counts_aer)
+
+
+# The Sampler 
+
+              # prefered way of simulating circuits
+              # matches the way we pack a circuit to send it to real QC
+              
+from qiskit_ibm_runtime import SamplerV2    
+       
+samp_aer = SamplerV2(mode=sim_aer)
+result=  samp_aer.run([qc],shots=100).result()
+
+counts_samp = result[0].data.c.get_counts()
+print(counts_samp)
+
+
+from qiskit.visualization import plot_histogram
+display(plot_histogram(counts_samp))
+
+
+
+# quantum_info module
+                    #used when we have simulating the output of circuit
+                    
+import qiskit.quantum_info as qi
+
+qc = QuantumCircuit(2)
+qc.h([0,1])
+display(qc.draw('mpl'))
+
+
+phi = qi.Statevector(qc)
+print(phi) #00,01,10,11
+
+
+
+probs = phi.probabilities()
+print(probs)
+
+
+counts = phi.sample_counts(shots=1024)
+print(counts) #outputs after executing circuit 1024 times
+
+
+from qiskit.visualization import plot_histogram
+
+display(plot_histogram(counts))
+
+
+samples = phi.sample_memory(shots=10)
+print(samples)
+
+
+display(phi.draw('bloch'))
+
+p = qi.DensityMatrix(qc)
+print(p)
+
+
+display(p.draw('city'))
+
+p1 = qi.partial_trace(p,[0])
+print(p1)
+
+# U = qi.Operator(qc)
+# print(U)
+
+# qc = QuantumCircuit(2,2)
+# qc.h(1)
+# qc.measure(1,1)
+# qc.x(0)
+# qc.measure(0,0) 
+# display(qc.draw('mpl'))
+
+# #print(qi.Statevector(qc))  #quantum info classes wouldnt work on circuits with measurements(classical regs or measures)
+
+
+
+# =============================================================================
+# Basic Simulator
+# =============================================================================
+
+from qiskit.providers.basic_provider import BasicSimulator
+
+sim_basic = BasicSimulator()   #creating simulator object
+
+qc = QuantumCircuit(2,2)
+qc.reset(0)
+qc.reset(1)
+qc.h(1)
+qc.measure(1,1)
+qc.x(0)
+qc.measure(0,0) 
+display(qc.draw('mpl'))
+
+job = sim_basic.run(qc,shots=100)
+result = job.result()
+counts = result.get_counts()
+print(counts)
+
+#from qiskit.visualization import plot_distribution
+#display(plot_distribution(counts))
+
+# as we do sampling in quantum info
+job = sim_basic.run(qc,shots=100,memory= True)
+result = job.result()
+samples =result.get_memory()
+print(samples)
+
+
+from qiskit.providers.basic_provider import BasicSimulator
+
+sim_basic = BasicSimulator()
+
+# from qiskit.circuit.library import QFT
+
+# qc = QuantumCircuit(3,3)
+# qc.append(QFT(3),range(3))
+# qc.measure(range(3),range(3))
+# display(qc.draw("mpl"))
+
+# QFT is not part of basis gates, that basic simulator runs
+# So, we transpile our circuits
+
+from qiskit import transpile
+
+qc_t = transpile(qc, backend=sim_basic)
+
+job = sim_basic.run(qc_t,shots=100)
+result = job.result()
+counts = result.get_counts()
+print(counts)
+
+
+# Aer Simulator
+
+from qiskit_aer import AerSimulator
+
+sim_aer = AerSimulator()
+ 
+qc = QuantumCircuit(2,2)
+qc.h(1)
+qc.measure(1,0)
+qc.h(0) 
+qc.measure(0,0) 
+display(qc.draw('mpl'))
+
+from qiskit import transpile
+
+qc_t = transpile(qc, backend=sim_aer)
+job = sim_aer.run(qc_t,shots=10)
+result = job.result()
+
+counts = result.get_counts()
+print(counts)
+
+
+qc = QuantumCircuit(4)
+qc.h(3)
+qc.cx(3,2)
+qc.save_statevector()  #we can save statevector anywhere between circuit
+qc.cx(3,1)
+qc.cx(3,0)
+qc.measure_all()
+display(qc.draw('mpl'))
+
+qc_aer = transpile(qc, backend=sim_aer)
+job = sim_aer.run(qc_aer,shots=1024)
+result= job.result()
+
+counts = result.get_counts()
+print(counts)
+
+phi = result.get_statevector()
+print(phi)
+
+
+
